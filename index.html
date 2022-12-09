@@ -49,6 +49,9 @@
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         const diffTimeFromNow = Math.abs(currentDay - startDay);
         const diffDaysFromNow = Math.ceil(diffTimeFromNow / (1000 * 60 * 60 * 24));
+        const daysRemains = Math.abs(endDay - currentDay);
+        const daysRemainsDiff = Math.ceil(daysRemains / (1000 * 60 * 60 * 24));
+        $('#daysRemaining').val(daysRemainsDiff);
 
         function calculateDays() {
             let date = new Date(startDay);
@@ -83,12 +86,6 @@
 
         calculateDays();
         $('#currentLevel').on('change', function() {
-           calculateDays();
-        })
-        $('#targetLevel').on('change', function() {
-           calculateDays();
-        })
-        $('#daysRemaining').on('change', function() {
            calculateDays();
         })
     </script>
