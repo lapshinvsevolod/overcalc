@@ -15,9 +15,9 @@
                 <label>Текущий уровень</label>
                 <input class="form-control" id="currentLevel" type="number" placeholder="Текущий уровень" value="0">
                 <label>Необходимый уровень</label>
-                <input class="form-control" id="targetLevel" type="number" placeholder="Необходимый уровень" value="200">
+                <input class="form-control" id="targetLevel" type="number" placeholder="Необходимый уровень" value="200" disabled>
                 <label>Дней осталось до конца БП</label>
-                <input class="form-control" id="daysRemaining" type="number" placeholder="Дней осталось до конца БП" value="62">
+                <input class="form-control" id="daysRemaining" type="number" placeholder="Дней осталось до конца БП" value="62" disabled>
             </div>
             <div class="pt-3">
                 <h2>Дни фарма</h3>
@@ -25,14 +25,11 @@
                     <thead>
                       <tr>
                         <th scope="col">День</th>
+                        <th scope="col">Дата</th>
                         <th scope="col">Уровень</th>
                       </tr>
                     </thead>
                     <tbody id="daysList">
-                      <tr>
-                        <th scope="row">1</th>
-                        <td>Mark</td>
-                      </tr>
                     </tbody>
                   </table>
             </div>
@@ -43,23 +40,41 @@
     <script src="https://code.jquery.com/jquery-3.6.1.min.js" integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>
 
     <script>
+        const startLevel = 1;
+        const endLevel = 200;
+        const currentDay = Date.now();
+        const startDay = new Date('12/06/2022');
+        const endDay = new Date('02/07/2023');
+        const diffTime = Math.abs(endDay - startDay);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const diffTimeFromNow = Math.abs(currentDay - startDay);
+        const diffDaysFromNow = Math.ceil(diffTimeFromNow / (1000 * 60 * 60 * 24));
+
         function calculateDays() {
+            let date = new Date(startDay);
             $('#daysList').empty();
             let currentLevel = parseInt($('#currentLevel').val());
             localStorage.setItem('currentLevel', currentLevel);
-            let targetLevel = parseInt($('#targetLevel').val());
-            let daysRemaining = parseInt($('#daysRemaining').val());
-            let levelsForDay = (targetLevel - currentLevel) / daysRemaining;
-            for (let index = 1; index <= daysRemaining; index++) {
-                $('#daysList').append('<tr><th scope="row">'+index+'</th><td>'+(currentLevel + Math.ceil(levelsForDay * index))+'</td></tr>');
+            
+            let levelsForDay = (endLevel - startLevel) / diffDays;
+            for (let index = 1; index <= diffDays; index++) {
+              expectedLevel = startLevel + Math.ceil(levelsForDay * index);
+              if (index === diffDaysFromNow) {
+                levelDiff = currentLevel - expectedLevel;
+                if (levelDiff >= 0) {
+                  levelDiff = '<span style="color:green;">+' + levelDiff + ' Опережает</span>';
+                } else {
+                  levelDiff = '<span style="color:red;">' + levelDiff + ' Опаздывает</span>';
+                }
+                expectedLevel = expectedLevel + ' <b>' + levelDiff +'</b>';
+              }
+              let row = '<tr><th scope="row">'+index+'</th><td>'+ date.toLocaleDateString()+'</td><td>'+expectedLevel+'</td></tr>'
+              date.setDate(date.getDate() + 1)
+              if (index >= diffDaysFromNow) {
+                $('#daysList').append(row);
+              }
             }
         }
-        
-        const date1 = Date.now();
-        const date2 = new Date('02/07/2023');
-        const diffTime = Math.abs(date2 - date1);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        $('#daysRemaining').val(diffDays);
 
         savedCurrentLevel = localStorage.getItem('currentLevel');
         if(savedCurrentLevel > 0) {
