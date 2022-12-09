@@ -46,6 +46,7 @@
         function calculateDays() {
             $('#daysList').empty();
             let currentLevel = parseInt($('#currentLevel').val());
+            localStorage.setItem('currentLevel', currentLevel);
             let targetLevel = parseInt($('#targetLevel').val());
             let daysRemaining = parseInt($('#daysRemaining').val());
             let levelsForDay = (targetLevel - currentLevel) / daysRemaining;
@@ -59,6 +60,11 @@
         const diffTime = Math.abs(date2 - date1);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         $('#daysRemaining').val(diffDays);
+
+        savedCurrentLevel = localStorage.getItem('currentLevel');
+        if(savedCurrentLevel > 0) {
+          $('#currentLevel').val(savedCurrentLevel);
+        }
 
         calculateDays();
         $('#currentLevel').on('change', function() {
