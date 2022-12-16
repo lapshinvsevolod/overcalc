@@ -50,8 +50,8 @@
 
             </form>
             <div class="d-flex flex-row">
-                    <img id="chatImage" class="me-2 rounded-circle" style="height: 64px;" src="https://cdn.vox-cdn.com/thumbor/FlxmTAdIEj_6gDY0SJVt2z4hNFI=/1400x1400/filters:format(jpeg)/cdn.vox-cdn.com/uploads/chorus_asset/file/19369848/9b85a23a428bced3269b3e193faaaddb.jpg" alt="Мерси">
-                    <p class="form-control mb-0"><span id="chatText" class="lead">Блаженные минуты отдыха. Увы, ничто не длится вечно.</span></p>
+                    <img id="chatImage" class="me-2 rounded-circle" style="height: 64px;" src="" alt="Мерси">
+                    <p class="form-control mb-0"><span id="chatText" class="lead"></span></p>
             </div>
             <div class="row pt-3">
                 <div>
@@ -189,12 +189,29 @@
         } else {
             levelDifference = 'm' + Math.abs(levelDifference)
         }
+        
+        try {
         chatMessages.forEach(function (chatMessage) {
             if (chatMessage.rank === levelDifference) {
                 $('#chatText').html(chatMessage.text);
                 $('#chatImage').attr("src", 'img/' + chatMessage.file);
+                throw BreakException;;
+            } else if(Math.abs(currentLevel - expectedLvl) > 15) {
+                if (levelDifference.startsWith('m')) {
+                    $('#chatText').html(chatMessages[chatMessages.length - 1].text);
+                    $('#chatImage').attr("src", 'img/' + chatMessages[chatMessages.length - 1].file);
+                    throw BreakException;
+                } else {
+                    $('#chatText').html(chatMessages[0].text);
+                    $('#chatImage').attr("src", 'img/' + chatMessages[0].file);
+                    throw BreakException;
+                }
             }
+            
         });
+        } catch (e) {
+            // if (e !== BreakException) throw e;
+            }
     }
 
     function getLvlDiff(currentLevel, expectedLevel) {
