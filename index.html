@@ -49,20 +49,27 @@
                 </div>
 
             </form>
-            <div class="pt-3">
-                <h2>Дни фарма</h2>
-                <table class="table table-striped">
-                    <thead>
-                    <tr>
-                        <th scope="col">День</th>
-                        <th scope="col">Дата окончания</th>
-                        <th scope="col">Опт. уровень</th>
-                    </tr>
-                    </thead>
-                    <tbody id="daysList">
-                    </tbody>
-                </table>
+            <div class="d-flex flex-row">
+                    <img id="chatImage" class="me-2 rounded-circle" style="height: 64px;" src="https://cdn.vox-cdn.com/thumbor/FlxmTAdIEj_6gDY0SJVt2z4hNFI=/1400x1400/filters:format(jpeg)/cdn.vox-cdn.com/uploads/chorus_asset/file/19369848/9b85a23a428bced3269b3e193faaaddb.jpg" alt="Мерси">
+                    <p class="form-control mb-0"><span id="chatText" class="lead">Блаженные минуты отдыха. Увы, ничто не длится вечно.</span></p>
             </div>
+            <div class="row pt-3">
+                <div>
+                    <h2>Дни фарма</h2>
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th scope="col">День</th>
+                            <th scope="col">Дата окончания</th>
+                            <th scope="col">Опт. уровень</th>
+                        </tr>
+                        </thead>
+                        <tbody id="daysList">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
         </div>
     </div>
 </div>
@@ -80,6 +87,14 @@
             this.dateStart = new Date(dateStart);
             this.dateEnd = new Date(dateEnd);
             this.emoji = emoji;
+        }
+    }
+
+    class ChatMessage {
+        constructor(text, rank) {
+            this.text = text;
+            this.rank = rank;
+            this.file = rank + '.webp';
         }
     }
 
@@ -104,6 +119,37 @@
     const BattleForOlympus = new Event("Битва за Олимп", "01/06/2023", "01/20/2023", "🏆");
     const LunarNewYear = new Event("Лунный Новый Год", "01/18/2023", "02/07/2023", "🐰");
     const events = [winterWonderland, BattleForOlympus, LunarNewYear];
+
+    // Чат
+    const chatMessages = [
+        new ChatMessage('Увы, таких сооружений больше не строят.', 'p15'),
+        new ChatMessage('Цените эти последние мгновения тишины!', 'p13'),
+        new ChatMessage('Изумительно!', 'p10'),
+        new ChatMessage('Впечатляет.', 'p9'),
+        new ChatMessage('Тебя выписали.', 'p8'),
+        new ChatMessage('Блаженные минуты отдыха. Увы, ничто не длится вечно.', 'p7'),
+        new ChatMessage('Счет за прием я вышлю позже.', 'p6'),
+        new ChatMessage('Так-то лучше.', 'p5'),
+        new ChatMessage('Другое дело!', 'p4'),
+        new ChatMessage('Так гораздо лучше.', 'p3'),
+        new ChatMessage('Герои не умирают!', 'p2'),
+        new ChatMessage('Уже ничего не болит?', 'p1'),
+        new ChatMessage('Я присмотрю за тобой!', 'p0'),
+        new ChatMessage('Доктора вызывали?', 'm1'),
+        new ChatMessage('Врача! Ой, я и есть врач.', 'm2'),
+        new ChatMessage('Где болит?', 'm3'),
+        new ChatMessage('Давай, возвращайся в бой.', 'm4'),
+        new ChatMessage('Скверно выглядишь.', 'm5'),
+        new ChatMessage('Нужно независимое мнение?', 'm6'),
+        new ChatMessage('Где теперь болит?', 'm7'),
+        new ChatMessage('Как вы оцените боль по десятибалльной шкале?', 'm8'),
+        new ChatMessage('Прими две таблетки и позвони мне утром.', 'm10'),
+        new ChatMessage('Позволь, я тебя осмотрю.', 'm11'),
+        new ChatMessage('Прогноз не очень хороший.', 'm12'),
+        new ChatMessage('Боюсь, ваше заболевание неизлечимо.', 'm13'),
+        new ChatMessage('Давай я тебя подлечу.', 'm14'),
+        new ChatMessage('Разве насилие - это выход?', 'm15'),
+    ];
 
     function getDateDiff(day1, day2) {
         let diffTime = Math.abs(day1 - day2);
@@ -130,9 +176,25 @@
         localStorage.setItem('currentLevel', currentLevel);
 
         let lvlDiff = getLvlDiff(currentLevel, expectedLvl)
+        changeThumbnail(currentLevel, expectedLvl)
         displayTodayStats.html(`<span class="fw-bold">${expectedLvl}</span> ${lvlDiff}`);
         displayDaysRemaining.html(`<span class="fw-bold">${daysRemaining + 1}</span> / <span class="text-muted">${battlePassDuration}</span>`);
         drawTable(currentLevel, lvlDiff, daysPassedFromBattlePassStart);
+    }
+
+    function changeThumbnail(currentLevel, expectedLvl) {
+        let levelDifference = currentLevel - expectedLvl;
+        if (levelDifference >= 0) {
+            levelDifference = 'p' + levelDifference;
+        } else {
+            levelDifference = 'm' + Math.abs(levelDifference)
+        }
+        chatMessages.forEach(function (chatMessage) {
+            if (chatMessage.rank === levelDifference) {
+                $('#chatText').html(chatMessage.text);
+                $('#chatImage').attr("src", 'img/' + chatMessage.file);
+            }
+        });
     }
 
     function getLvlDiff(currentLevel, expectedLevel) {
