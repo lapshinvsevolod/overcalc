@@ -123,7 +123,6 @@
         currentDay = convertTZ(currentDay, "UTC");
 
         let daysPassedFromBattlePassStart = getDateDiff(currentDay, convertTZ(battlePassStartDate, "UTC"));
-        console.log(daysPassedFromBattlePassStart, currentDay, convertTZ(battlePassStartDate, "UTC"));
         let daysRemaining = battlePassDuration - daysPassedFromBattlePassStart;
         let expectedLvl = battlePassStartLvl + Math.ceil(lvlsForDay * (battlePassDuration - daysRemaining));
 
@@ -185,9 +184,15 @@
         }
     }
 
-    function showTime() {
+    function showTime(previousTime = null) {
         let date = new Date();
         date = convertTZ(date, "UTC");
+
+        if(previousTime) {
+            if(date.getTime() - previousTime.getTime() > 1000) {
+                calculateForNow();
+            }
+        }
 
         let h = 18 - date.getHours(); // 0 - 23
         let m = 59 - date.getMinutes(); // 0 - 59
@@ -208,7 +213,7 @@
         let time = h + ":" + m + ":" + s;
         $('#timeRemaining').html(time);
 
-        setTimeout(showTime, 1000);
+        setTimeout(showTime, 1000, date);
     }
 
     function init() {
