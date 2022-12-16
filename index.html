@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -12,8 +12,14 @@
 <div class="container">
     <div class="row justify-content-md-center">
         <div class="col-lg-6 col-sm-12 col-md-10">
-            <h1 class="pt-3">Overcalc</h1>
+            <h1 class="pt-3">Сезон 2</h1>
             <form>
+                <div class="row">
+                    <div class="col-md-6 col-sm-12">
+                        <label>До конца игрового дня:</label>
+                        <div class="form-control-plaintext form-control-lg mb-3" id="timeRemaining"></div>
+                    </div>
+                </div>
                 <div class="row">
                     <div class="col-md-3 col-sm-6">
                         <label>Дней осталось:</label>
@@ -27,14 +33,19 @@
                         <label>Текущий уровень:</label>
                         <div class="mb-3 d-flex flex-row">
                             <div class="input-group me-2">
-                                <button class="btn btn-outline-secondary" type="button" id="unlockEdit"><i id="lockIcon" class="bi bi-lock-fill"></i></button>
-                                <input class="form-control form-control-lg" id="currentLevel" type="number" placeholder="Текущий уровень" value="0" disabled>
+                                <button class="btn btn-outline-secondary" type="button" id="unlockEdit"><i id="lockIcon"
+                                                                                                           class="bi bi-lock-fill"></i>
+                                </button>
+                                <input class="form-control form-control-lg" id="currentLevel" type="number"
+                                       placeholder="Текущий уровень" value="0" disabled>
                             </div>
-                            <button id="decrementCurrentLevel" class="btn btn-outline-primary" type="button"><i class="bi bi-dash-lg"></i></button>
-                            <button id="incrementCurrentLevel" class="btn btn-outline-primary ms-2" type="button"><i class="bi bi-plus-lg"></i></button>
+                            <button id="decrementCurrentLevel" class="btn btn-outline-primary" type="button"><i
+                                    class="bi bi-dash-lg"></i></button>
+                            <button id="incrementCurrentLevel" class="btn btn-outline-primary ms-2" type="button"><i
+                                    class="bi bi-plus-lg"></i></button>
                         </div>
                     </div>
-                    
+
                 </div>
 
             </form>
@@ -44,8 +55,8 @@
                     <thead>
                     <tr>
                         <th scope="col">День</th>
-                        <th scope="col">Дата</th>
-                        <th scope="col">Уровень</th>
+                        <th scope="col">Дата окончания дня</th>
+                        <th scope="col">Оптимальный уровень</th>
                     </tr>
                     </thead>
                     <tbody id="daysList">
@@ -72,95 +83,168 @@
         }
     }
 
-    const startLevel = 1;
-    const endLevel = 200;
-    let currentDay = Date.now();
-    const startDay = new Date('12/06/2022');
-    const endDay = new Date('02/07/2023');
-    const diffTime = Math.abs(endDay - startDay);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    let diffTimeFromNow = Math.abs(currentDay - startDay);
-    let diffDaysFromNow = Math.ceil(diffTimeFromNow / (1000 * 60 * 60 * 24));
-    let daysRemains = Math.abs(endDay - currentDay);
-    let daysRemainsDiff = Math.ceil(daysRemains / (1000 * 60 * 60 * 24));
-    $('#daysRemaining').html('<span class="fw-bold">' +daysRemainsDiff + '</span> / <span class="text-muted">' + diffDays + '</span>');
-    const winterWonderland = new Event("Зимняя Сказка", "12/13/2022", "01/04/2023", "❄");
-    const BattleForOlympus = new Event("Битва за Олимп", "01/05/2023", "01/19/2023", "🏆");
-    const LunarNewYear = new Event("Лунный Новый Год", "01/17/2023", "02/06/2023", "🐰");
+    // Основыне константы
+    const battlePassStartLvl = 1;
+    const battlePassEndLvl = 200;
+    const battlePassStartDate = new Date('2022-12-06T19:00:00.000+00:00');
+    const battlePassEndDate = new Date('2023-02-07T19:00:00.000+00:00');
+    const battlePassDuration = getDateDiff(battlePassEndDate, battlePassStartDate);
+    const lvlsForDay = (battlePassEndLvl - battlePassStartLvl) / battlePassDuration;
+
+    // Селекторы
+    const displayDaysRemaining = $('#daysRemaining');
+    const displayTable = $('#daysList');
+    const displayTodayStats = $('#todayStats');
+    const inputCurrentLvl = $('#currentLevel');
+    const decrementButton = $('#decrementCurrentLevel');
+    const incrementButton = $('#incrementCurrentLevel');
+
+    // События
+    const winterWonderland = new Event("Зимняя Сказка", "12/14/2022", "01/05/2023", "❄");
+    const BattleForOlympus = new Event("Битва за Олимп", "01/06/2023", "01/20/2023", "🏆");
+    const LunarNewYear = new Event("Лунный Новый Год", "01/18/2023", "02/07/2023", "🐰");
     const events = [winterWonderland, BattleForOlympus, LunarNewYear];
 
-    function calculateDays() {
-        let date = new Date(startDay);
-        $('#daysList').empty();
-        let currentLevel = parseInt($('#currentLevel').val());
+    function getDateDiff(day1, day2) {
+        let diffTime = Math.abs(day1 - day2);
+        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    }
+
+    function convertTZ(date, tzString) {
+        return new Date((typeof date === "string" ? new Date(date) : date).toLocaleString("en-US", {timeZone: tzString}));
+    }
+
+    function getCurrentLvl() {
+        return parseInt(inputCurrentLvl.val());
+    }
+
+    function calculateForNow() {
+        let currentDay = new Date();
+        currentDay = convertTZ(currentDay, "UTC");
+
+        let daysPassedFromBattlePassStart = getDateDiff(currentDay, convertTZ(battlePassStartDate, "UTC"));
+        console.log(daysPassedFromBattlePassStart, currentDay, convertTZ(battlePassStartDate, "UTC"));
+        let daysRemaining = battlePassDuration - daysPassedFromBattlePassStart;
+        let expectedLvl = battlePassStartLvl + Math.ceil(lvlsForDay * (battlePassDuration - daysRemaining));
+
+        let currentLevel = getCurrentLvl();
         localStorage.setItem('currentLevel', currentLevel);
 
-        let levelsForDay = (endLevel - startLevel) / diffDays;
-        for (let index = 1; index <= diffDays; index++) {
-            expectedLevel = startLevel + Math.ceil(levelsForDay * index);
-            if (index === diffDaysFromNow || index === 1 && diffDaysFromNow === 0) {
-                levelDiff = currentLevel - expectedLevel;
-                if (levelDiff >= 0) {
-                    levelDiffText = '<span class="text-success">+' + levelDiff + ' от цели</span>';
-                } else {
-                    levelDiffText = '<span class="text-danger">' + levelDiff + ' от цели</span>';
-                }
-                expectedLevel = expectedLevel + ' <b>' + levelDiffText + '</b>';
-                let expected = startLevel + Math.ceil(levelsForDay * index);
-                let diff
-                $('#todayStats').html('<span class="fw-bold">'+expected+'</span> '+levelDiffText+'');
-            }
-            let eventString = ' ';
-            events.forEach(function (event){
-                if (date >= event.dateStart && date <= event.dateEnd) {
-                    eventString = eventString + ' <span title="'+event.name+'">' + event.emoji + '</>';
-                }
-            })
-            let row = '<tr><th scope="row">' + index + '</th><td>' + date.toLocaleDateString() + eventString + '</td><td>' + expectedLevel + '</td></tr>'
-            date.setDate(date.getDate() + 1)
-            if (index >= diffDaysFromNow) {
-                $('#daysList').append(row);
-            }
+        let lvlDiff = getLvlDiff(currentLevel, expectedLvl)
+        displayTodayStats.html(`<span class="fw-bold">${expectedLvl}</span> ${lvlDiff}`);
+        displayDaysRemaining.html(`<span class="fw-bold">${daysRemaining + 1}</span> / <span class="text-muted">${battlePassDuration}</span>`);
+        drawTable(currentLevel, lvlDiff, daysPassedFromBattlePassStart);
+    }
+
+    function getLvlDiff(currentLevel, expectedLevel) {
+        let levelDiff = currentLevel - expectedLevel;
+        if (levelDiff >= 0) {
+            return ` <span class="text-success">+${levelDiff} от цели</span>`;
+        } else {
+            return ` <span class="text-danger">${levelDiff} от цели</span>`;
         }
     }
 
-    savedCurrentLevel = localStorage.getItem('currentLevel');
-    if (savedCurrentLevel > 0) {
-        $('#currentLevel').val(savedCurrentLevel);
+    function incrementDate(date) {
+        date.setDate(date.getDate() + 1);
+        return date;
     }
 
-    calculateDays();
+    function drawTable(currentLevel, lvlDiff, daysPassedFromBattlePassStart) {
+        let date = new Date(battlePassStartDate);
+        displayTable.empty();
 
-    setInterval(function() {
-        currentDay = Date.now();
-        diffTimeFromNow = Math.abs(currentDay - startDay);
-        diffDaysFromNow = Math.ceil(diffTimeFromNow / (1000 * 60 * 60 * 24));
-        daysRemains = Math.abs(endDay - currentDay);
-        daysRemainsDiff = Math.ceil(daysRemains / (1000 * 60 * 60 * 24));
-        $('#daysRemaining').html('<span class="fw-bold">' +daysRemainsDiff + '</span> / <span class="text-muted">' + diffDays + '</span>');
-        calculateDays();
-    }, 60 * 1000); // 60 * 1000 milsec
-    
-    $('#currentLevel').on('change', function () {
-        calculateDays();
+        for (let index = 1; index <= battlePassDuration; index++) {
+            date = incrementDate(date);
+            if (index < daysPassedFromBattlePassStart) {
+                continue
+            }
+            let expectedLvl = battlePassStartLvl + Math.ceil(lvlsForDay * index);
+
+            let displayLvlDiff = '';
+            if (index === daysPassedFromBattlePassStart || index === 1 && daysPassedFromBattlePassStart === 0) {
+                displayLvlDiff = lvlDiff;
+            }
+
+            let eventString = ' ';
+            events.forEach(function (event) {
+                if (date >= event.dateStart && date <= event.dateEnd) {
+                    eventString = eventString + ` <span title="${event.name}">${event.emoji}</span>`;
+                }
+            })
+
+            let row = `<tr><th scope="row">${index}</th><td>${date.toLocaleDateString("ru-RU", {
+                day: "numeric",
+                month: "numeric",
+                year: "numeric",
+                hour: "numeric",
+                minute: "2-digit"
+            }) + eventString}</td><td>${expectedLvl + displayLvlDiff}</td></tr>`
+
+            displayTable.append(row);
+        }
+    }
+
+    function showTime() {
+        let date = new Date();
+        date = convertTZ(date, "UTC");
+
+        let h = 18 - date.getHours(); // 0 - 23
+        let m = 59 - date.getMinutes(); // 0 - 59
+        let s = 59 - date.getSeconds(); // 0 - 59
+
+        if (h < 0) {
+            h = 24 + h;
+        }
+
+        if (h === 23 && m === 59 && s === 58) {
+            calculateForNow();
+        }
+
+        h = (h < 10) ? "0" + h : h;
+        m = (m < 10) ? "0" + m : m;
+        s = (s < 10) ? "0" + s : s;
+
+        let time = h + ":" + m + ":" + s;
+        $('#timeRemaining').html(time);
+
+        setTimeout(showTime, 1000);
+    }
+
+    function init() {
+        savedCurrentLevel = localStorage.getItem('currentLevel');
+        if (savedCurrentLevel > 0) {
+            inputCurrentLvl.val(savedCurrentLevel);
+        }
+
+        calculateForNow();
+        showTime();
+
+    }
+
+    function changeCurrentLvl(number) {
+        let currentLvl = getCurrentLvl();
+        currentLvl = currentLvl + number;
+        inputCurrentLvl.val(currentLvl);
+        calculateForNow();
+    }
+
+    init();
+
+    inputCurrentLvl.on('change', function () {
+        calculateForNow();
     })
 
-    $('#decrementCurrentLevel').on('click', function () {
-        let currentLevel = parseInt($('#currentLevel').val());
-        currentLevel--;
-        $('#currentLevel').val(currentLevel);
-        calculateDays();
+    decrementButton.on('click', function () {
+        changeCurrentLvl(-1);
     })
-    $('#incrementCurrentLevel').on('click', function () {
-        let currentLevel = parseInt($('#currentLevel').val());
-        currentLevel++;
-        $('#currentLevel').val(currentLevel);
-        calculateDays();
+
+    incrementButton.on('click', function () {
+        changeCurrentLvl(1);
     })
 
     $('#unlockEdit').on('click', function () {
-        console.log($('#currentLevel').prop('disabled'));
-        if ($('#currentLevel').prop('disabled')) {
+        if (inputCurrentLvl.prop('disabled')) {
             $('#lockIcon').attr('class', 'bi bi-unlock-fill');
             $('#currentLevel').prop('disabled', false);
         } else {
